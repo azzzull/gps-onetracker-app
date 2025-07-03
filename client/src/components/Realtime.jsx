@@ -153,7 +153,7 @@ export default function Realtime({ vehicles: allVehicles = [] }) {
     // Fetch detail kendaraan by id
     const fetchVehicleDetail = async (id) => {
         try {
-            const res = await fetch(`http://localhost:5000/vehicle/${id}`);
+            const res = await fetch(`http://localhost:5000/vehicle?id=${id}`); // pakai query param
             if (!res.ok) throw new Error('Gagal fetch detail kendaraan');
             const data = await res.json();
             setVehicleDetail(data);
@@ -168,11 +168,10 @@ export default function Realtime({ vehicles: allVehicles = [] }) {
         return vehicles.find(v => v.id === focusedVehicleId) || null;
     }, [focusedVehicleId, vehicles]);
 
-    // Saat marker di-klik, set id kendaraan yang difokuskan
+    // Saat marker di-klik, set id kendaraan yang difokuskan dan fetch detail
     const handleMarkerClick = (vehicle) => {
         setFocusedVehicleId(vehicle.id);
-        const detail = vehicles.find(v => v.id === vehicle.id);
-        setVehicleDetail(detail || null);
+        fetchVehicleDetail(vehicle.id); // selalu fetch detail dari backend
     };
 
     // MapController versi simple: auto-center/flyTo setiap data/focus berubah, tanpa hasUserInteracted/triggerFit
@@ -269,10 +268,12 @@ export default function Realtime({ vehicles: allVehicles = [] }) {
                     <h2 className="text-lg font-bold mb-2">Detail Kendaraan</h2>
                     <p>
                         <strong>🚚 Plat : </strong>
-                        {vehicleDetail?.plate || vehicleDetail?.number || '-'}</p>
+                        {vehicleDetail?.plate || vehicleDetail?.number || focusedVehicle.plate || focusedVehicle.number || '-'}
+                    </p>
                     <p>
                         <strong>🧑‍✈️ Driver : </strong>
-                        {vehicleDetail?.driver?.name || vehicleDetail?.driverName || vehicleDetail?.driver || '-'}</p>
+                        {vehicleDetail?.driver?.name || vehicleDetail?.driverName || vehicleDetail?.driver || focusedVehicle.driver?.name || focusedVehicle.driverName || focusedVehicle.driver || '-'}
+                    </p>
                     <p>
                         <strong>🌡️ Suhu : </strong>
                         {focusedVehicle.temperature ?? '-'}°C</p>

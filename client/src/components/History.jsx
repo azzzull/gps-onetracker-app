@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const qtyPerPage = 20;
+const PAGE_SIZE_FILTER = 20;
 const BEARER_TOKEN = 'wtv4iBavjfCY92DbxTCsUVDRGAAhuG9QK4Y7HoscIJRDwHzLPIWkwvQqcQ4JqlOv';
 
 export default function HistoryLog() {
@@ -10,6 +11,7 @@ export default function HistoryLog() {
   const [logs, setLogs] = useState([]);
   const [date, setDate] = useState('');
   const [page, setPage] = useState(0);
+  const [filterPage, setFilterPage] = useState(0);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,26 +72,11 @@ export default function HistoryLog() {
     const fetchLogs = async () => {
       setIsLoading(true);
       try {
-        // Format date range for API
-        let dateFilter = {};
-        if (date) {
-          const startDate = new Date(date);
-          startDate.setHours(0, 0, 0, 0);
-          
-          const endDate = new Date(date);
-          endDate.setHours(23, 59, 59, 999);
-          
-          dateFilter = {
-            start_time: startDate.toISOString(),
-            end_time: endDate.toISOString()
-          };
-        }
-
+        // Jika ada filter tanggal, fetch dengan qty besar agar data tanggal itu pasti terambil
         const params = new URLSearchParams({
           id: selectedVehicleId,
-          start: page * qtyPerPage,
-          qty: qtyPerPage,
-          ...dateFilter
+          start: 0,
+          qty: date ? 1000 : qtyPerPage
         });
 
         const res = await fetch(`http://localhost:5000/data?${params.toString()}`, {
@@ -113,6 +100,11 @@ export default function HistoryLog() {
     fetchLogs();
   }, [selectedVehicleId, page, date]);
 
+  // Reset page filter saat tanggal berubah
+  useEffect(() => {
+    setFilterPage(0);
+  }, [date]);
+
   const clearDateFilter = () => {
     setDate('');
     setPage(0);
@@ -121,11 +113,15 @@ export default function HistoryLog() {
   // Filter logs client-side as fallback (if API doesn't support date filtering)
   const filteredLogs = date 
     ? logs.filter(log => {
-        const logDate = new Date(log.time).toISOString().split('T')[0];
-        const selectedDate = new Date(date).toISOString().split('T')[0];
-        return logDate === selectedDate;
+        // Bandingkan tanggal string langsung agar tidak terpengaruh timezone
+        return typeof log.time === 'string' && log.time.slice(0,10) === date;
       })
     : logs;
+
+  // Pagination frontend untuk hasil filter tanggal
+  const pagedLogs = date
+    ? filteredLogs.slice(filterPage * PAGE_SIZE_FILTER, (filterPage + 1) * PAGE_SIZE_FILTER)
+    : filteredLogs;
 
   return (
     <div className="w-full h-full bg-slate-100 p-3 relative">
@@ -150,7 +146,7 @@ export default function HistoryLog() {
               <option value="">Pilih Kendaraan</option>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.number || v.id}
+                  {v.id}
                 </option>
               ))}
             </select>
@@ -210,11 +206,23 @@ export default function HistoryLog() {
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.length > 0 ? (
-                filteredLogs.map((log, i) => (
+              {pagedLogs.length > 0 ? (
+                pagedLogs.map((log, i) => (
                   <tr key={i} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2 whitespace-nowrap">
-                      {new Date(log.time).toLocaleString()}
+                      {/* Format dd-MM-yyyy HH.mm.ss */}
+                      {log.time
+                        ? (() => {
+                            const d = new Date(log.time);
+                            const dd = String(d.getDate()).padStart(2, '0');
+                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                            const yyyy = d.getFullYear();
+                            const HH = String(d.getHours()).padStart(2, '0');
+                            const min = String(d.getMinutes()).padStart(2, '0');
+                            const ss = String(d.getSeconds()).padStart(2, '0');
+                            return `${dd}-${mm}-${yyyy} ${HH}.${min}.${ss}`;
+                          })()
+                        : '-'}
                     </td>
                     <td className="px-4 py-2">{log.location_name || '-'}</td>
                     <td className="px-4 py-2 whitespace-nowrap">
@@ -242,17 +250,17 @@ export default function HistoryLog() {
         {filteredLogs.length > 0 && (
           <div className="flex justify-between items-center mt-4">
             <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+              onClick={() => date ? setFilterPage((prev) => Math.max(prev - 1, 0)) : setPage((prev) => Math.max(prev - 1, 0))}
               className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
-              disabled={page === 0 || isLoading}
+              disabled={date ? filterPage === 0 : page === 0 || isLoading}
             >
               ⬅ Sebelumnya
             </button>
-            <span className="text-sm">Halaman {page + 1}</span>
+            <span className="text-sm">Halaman {date ? filterPage + 1 : page + 1}</span>
             <button
-              onClick={() => setPage((prev) => prev + 1)}
+              onClick={() => date ? setFilterPage((prev) => prev + 1) : setPage((prev) => prev + 1)}
               className="px-4 py-2 bg-slate-200 rounded disabled:opacity-50"
-              disabled={filteredLogs.length < qtyPerPage || isLoading}
+              disabled={date ? pagedLogs.length < PAGE_SIZE_FILTER : filteredLogs.length < qtyPerPage || isLoading}
             >
               Selanjutnya ➡
             </button>

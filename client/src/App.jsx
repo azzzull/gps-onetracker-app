@@ -36,6 +36,8 @@ function App() {
                     setFocusedVehicle={setFocusedVehicle}
                     focusedVehicle={focusedVehicle}
                     vehicles={vehicles}
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
                     />
                     {activePage === 'dashboard' && <Dashboard />}
                     {activePage === 'realtime' && (
@@ -43,7 +45,7 @@ function App() {
                         vehicles={vehicles}
                     />
                     )}
-                    {activePage === 'mapview' && <MapView vehicles={vehicles} />}
+                    {activePage === 'mapview' && <MapView vehicles={vehicles} selectedDate={selectedDate} />}
                     {activePage === 'history' && <History />}
                 </div>
             </div>

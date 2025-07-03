@@ -35,6 +35,10 @@ export default function Dashboard() {
                         const data = await res.json();
                         if (Array.isArray(data) && data.length > 0) {
                             const last = data[0];
+                            // Hitung selisih waktu update terakhir
+                            const lastTime = new Date(last.time).getTime();
+                            const diff = (now - lastTime) / (1000 * 60 * 60); // jam
+                            if (diff <= 1) activeCount++; // aktif jika update < 1 jam lalu
                             const temp = last.container && last.container.temperature !== undefined ? parseFloat(last.container.temperature) : undefined;
                             if (temp !== undefined && temp > 15) {
                                 // Fetch detail kendaraan untuk plat, driver, dsb
@@ -42,7 +46,7 @@ export default function Dashboard() {
                                 let driver = v.driver?.name || v.driverName || v.driver || '-';
                                 let location = last.location_name || '-';
                                 try {
-                                    const resDetail = await fetch(`http://localhost:5000/vehicle/${v.id}`);
+                                    const resDetail = await fetch(`http://localhost:5000/vehicle?id=${v.id}`);
                                     if (resDetail.ok) {
                                         const detail = await resDetail.json();
                                         plate = detail.plate || detail.number || plate;

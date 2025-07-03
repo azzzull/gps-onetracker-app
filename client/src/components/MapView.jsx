@@ -30,18 +30,18 @@ export default function MapView({ vehicles = [], selectedDate }) {
   const [popupLoading, setPopupLoading] = useState({});
   const PAGE_SIZE = 1000;
 
-  // Fetch history perjalanan
+  // Gabungkan reset state dan fetch data history dalam satu useEffect
   useEffect(() => {
-    setHistory([]); // clear saat filter berubah
-    setPage(0); // reset ke halaman pertama
-    setLoading(true); // mulai loading
-  }, [selectedPlate, selectedDate, vehicles]);
+    // Reset state saat filter berubah
+    setHistory([]);
+    setLoading(true);
+    setPage(0); // reset ke halaman pertama jika filter berubah
 
-  useEffect(() => {
     // Jika semua kendaraan, fetch tanpa id
     let fetchAll = selectedPlate === 'all';
     if (!selectedPlate) {
       setHistory([]);
+      setLoading(false);
       return;
     }
     // Cari ID kendaraan dari plat nomor
@@ -52,6 +52,7 @@ export default function MapView({ vehicles = [], selectedDate }) {
     }
     if (!fetchAll && !vehicleId) {
       setHistory([]);
+      setLoading(false);
       return;
     }
     // Build params
@@ -84,6 +85,7 @@ export default function MapView({ vehicles = [], selectedDate }) {
       }
     };
     fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlate, selectedDate, vehicles, page]);
 
   // Debug: log data history

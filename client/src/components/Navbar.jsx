@@ -77,7 +77,7 @@ export default function Navbar({ page, selectedDate, setSelectedDate, vehicleIds
                 <div className="w-full flex items-center gap-4">
                     <h1 className="text-md text-zinc-700 flex items-center">
                         <Funnel className="w-4 h-4 mr-1" />
-                        Filter Kendaraan & Tanggal
+                        Pilih Kendaraan & Tanggal
                     </h1>
                     <select
                         className="border bg-white border-zinc-200 rounded-md px-3 py-2 text-sm shadow-sm min-w-[200px]"

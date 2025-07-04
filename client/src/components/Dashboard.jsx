@@ -2,93 +2,42 @@ import { Truck, AlertTriangle, /*MapPinCheckInside,*/ Navigation } from 'lucide-
 import { useEffect, useState } from 'react';
 import { useCountUp } from './useCountUp';
 
-export default function Dashboard() {
+export default function Dashboard({ alertVehicles, vehicles }) {
     const [activeVehicle, setActiveVehicle] = useState(0);
-    const [totalVehicle, setTotalVehicle] = useState(0);
-    // const [totalRoutes, setTotalRoutes] = useState(0);
-    const [pendingAlerts, setPendingAlerts] = useState('-');
-    const [alertVehicles, setAlertVehicles] = useState([]);
     const [showAlertModal, setShowAlertModal] = useState(false);
+
+    const totalVehicle = vehicles.length;
+    const pendingAlerts = alertVehicles.length > 0 ? alertVehicles.length : '-';
 
     const animatedActive = useCountUp(activeVehicle);
     const animatedTotal = useCountUp(totalVehicle);
-    // const animatedRoutes = useCountUp(typeof totalRoutes === 'number' ? totalRoutes : 0);
     const animatedAlerts = useCountUp(typeof pendingAlerts === 'number' ? pendingAlerts : 0);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch vehicles
-                const resVehicle = await fetch('http://localhost:5000/vehicle');
-                const vehicles = await resVehicle.json();
-                setTotalVehicle(vehicles.length);
-
-                // Hitung active vehicle berdasarkan waktu update terakhir dari data posisi
-                const now = Date.now();
-                let activeCount = 0;
-                let alerts = [];
-                await Promise.all(vehicles.map(async (v) => {
-                    try {
-                        // Ambil data posisi terakhir
-                        const res = await fetch(`http://localhost:5000/data?id=${v.id}&limit=1`);
-                        const data = await res.json();
-                        if (Array.isArray(data) && data.length > 0) {
-                            const last = data[0];
-                            // Hitung selisih waktu update terakhir
-                            const lastTime = new Date(last.time).getTime();
-                            const diff = (now - lastTime) / (1000 * 60 * 60); // jam
-                            if (diff <= 1) activeCount++; // aktif jika update < 1 jam lalu
-                            const temp = last.container && last.container.temperature !== undefined ? parseFloat(last.container.temperature) : undefined;
-                            if (temp !== undefined && temp > 15) {
-                                // Fetch detail kendaraan untuk plat, driver, dsb
-                                let plate = v.plate || v.number || '-';
-                                let driver = v.driver?.name || v.driverName || v.driver || '-';
-                                let location = last.location_name || '-';
-                                try {
-                                    const resDetail = await fetch(`http://localhost:5000/vehicle?id=${v.id}`);
-                                    if (resDetail.ok) {
-                                        const detail = await resDetail.json();
-                                        plate = detail.plate || detail.number || plate;
-                                        driver = detail.driver?.name || detail.driverName || detail.driver || driver;
-                                        if (detail.location_name) location = detail.location_name;
-                                    }
-                                } catch {}
-                                alerts.push({
-                                    id: v.id,
-                                    plate,
-                                    driver,
-                                    temperature: temp,
-                                    location,
-                                    time: last.time
-                                });
-                            }
-                        }
-                    } catch {}
-                }));
-                setActiveVehicle(activeCount);
-                setAlertVehicles(alerts);
-                setPendingAlerts(alerts.length > 0 ? alerts.length : '-');
-
-                // Fetch total routes dari semua kendaraan
-                // (sudah diakumulasi di atas jika pakai limit=1, jadi fetch ulang jika ingin total semua)
-                // let totalRoutes = 0;
-                // for (const v of vehicles) {
-                //     try {
-                //         const res = await fetch(`http://localhost:5000/data?id=${v.id}`);
-                //         const data = await res.json();
-                //         if (Array.isArray(data)) totalRoutes += data.length;
-                //     } catch {}
-                // }
-                // setTotalRoutes(totalRoutes);
-            } catch (err) {
-                setActiveVehicle(0);
-                setTotalVehicle(0);
-                // setTotalRoutes(0);
-                setPendingAlerts('-');
-            }
+        const calculateActiveVehicles = async () => {
+            const now = Date.now();
+            let activeCount = 0;
+            await Promise.all(vehicles.map(async (v) => {
+                try {
+                    const res = await fetch(`http://localhost:5000/data?id=${v.id}&limit=1`);
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const last = data[0];
+                        const lastTime = new Date(last.time).getTime();
+                        const diff = (now - lastTime) / (1000 * 60 * 60); // jam
+                        if (diff <= 1) activeCount++;
+                    }
+                } catch { }
+            }));
+            setActiveVehicle(activeCount);
         };
-        fetchData();
-    }, []);
+
+        if (vehicles.length > 0) {
+            calculateActiveVehicles();
+        } else {
+            setActiveVehicle(0);
+        }
+    }, [vehicles]);
 
     return (
         <div className="w-full h-full bg-slate-100 p-3">

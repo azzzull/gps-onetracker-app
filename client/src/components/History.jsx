@@ -9,8 +9,7 @@ const qtyPerPage = 20;
 const PAGE_SIZE_FILTER = 20;
 const BEARER_TOKEN = 'wtv4iBavjfCY92DbxTCsUVDRGAAhuG9QK4Y7HoscIJRDwHzLPIWkwvQqcQ4JqlOv';
 
-export default function HistoryLog() {
-  const [vehicles, setVehicles] = useState([]);
+export default function HistoryLog({ vehicles }) {
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [vehicleInfo, setVehicleInfo] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -27,23 +26,6 @@ export default function HistoryLog() {
     { value: 'not_normal', label: 'Suhu Tidak Normal (> 20°C)' }
   ];
 
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/vehicle', {
-          headers: { Authorization: `Bearer ${BEARER_TOKEN}` },
-        });
-        
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setVehicles(data);
-      } catch (err) {
-        console.error('❌ Gagal ambil vehicle:', err);
-        setError('Gagal memuat daftar kendaraan');
-      }
-    };
-    fetchVehicles();
-  }, []);
 
   useEffect(() => {
     if (!selectedVehicleId) {
@@ -149,8 +131,8 @@ export default function HistoryLog() {
     : filteredLogs;
 
   return (
-    <div className="w-full h-full bg-slate-100 p-3 relative">
-      <div className="w-full h-full rounded-3xl overflow-hidden shadow-lg p-10 bg-white">
+    <div className="w-full min-h-full bg-slate-100 p-3 relative">
+      <div className="w-full min-h-full rounded-3xl shadow-lg p-10 bg-white">
         {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             ⚠️ {error}

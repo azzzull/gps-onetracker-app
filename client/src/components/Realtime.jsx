@@ -285,16 +285,6 @@ export default function Realtime({ vehicles: allVehicles = [] }) {
                         {new Date(focusedVehicle.time).toLocaleString()}</p>
                 </div>
             )}
-
-            <div className="absolute top-4 right-4 flex items-center gap-2 z-[1000]">
-                <div className="bg-white/90 px-3 py-1 rounded-full text-xs shadow">
-                    Status: {connectionStatus === 'connected'
-                        ? '🟢 Terhubung'
-                        : connectionStatus === 'connecting'
-                            ? '🟡 Menghubungkan...'
-                            : '🔴 Terputus'}
-                </div>
-            </div>
         </div>
     );
 }

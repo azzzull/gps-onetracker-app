@@ -14,6 +14,10 @@
   @apply bg-slate-50 rounded-xl p-6 shadow-md
 }
 
+option:hover {
+  background-color: #f1f5f9; /* slate-100 */
+}
+
 /* Tambahkan di file CSS Anda */
 .leaflet-popup.persistent-popup {
   pointer-events: auto !important;
@@ -67,3 +71,4 @@
 .animate-modalPop {
   animation: modalPop 0.25s cubic-bezier(0.4,0,0.2,1);
 }
+

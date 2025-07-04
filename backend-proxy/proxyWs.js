@@ -24,19 +24,35 @@ wss.on('connection', (clientWs) => {
         targetWs.send(JSON.stringify({type: 'auth', token: BEARER_TOKEN}));
     });
 
+    // Prevent echo loop: only forward data if not already from the other side
+    let isForwardingFromClient = false;
+    let isForwardingFromTarget = false;
+
     // Forward messages from client to target
     clientWs.on('message', (data) => {
-        console.log('Forwarding message to target:', data.toString());
-        if (targetWs.readyState === WebSocket.OPEN) {
-            targetWs.send(data);
+        if (isForwardingFromTarget) return; // Prevent echo
+        isForwardingFromClient = true;
+        try {
+            // Optionally filter message type here
+            if (targetWs.readyState === WebSocket.OPEN) {
+                targetWs.send(data);
+            }
+        } finally {
+            isForwardingFromClient = false;
         }
     });
 
     // Forward messages from target to client
     targetWs.on('message', (data) => {
-        console.log('Forwarding message to client:', data.toString());
-        if (clientWs.readyState === WebSocket.OPEN) {
-            clientWs.send(data);
+        if (isForwardingFromClient) return; // Prevent echo
+        isForwardingFromTarget = true;
+        try {
+            // Optionally filter message type here
+            if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(data);
+            }
+        } finally {
+            isForwardingFromTarget = false;
         }
     });
 

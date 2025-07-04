@@ -1,4 +1,9 @@
 import { useEffect, useState } from 'react';
+import Select from 'react-select';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import "../datepicker.css";
+import { selectStyles } from './selectStyles';
 
 const qtyPerPage = 20;
 const PAGE_SIZE_FILTER = 20;
@@ -9,11 +14,18 @@ export default function HistoryLog() {
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [vehicleInfo, setVehicleInfo] = useState(null);
   const [logs, setLogs] = useState([]);
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(null);
   const [page, setPage] = useState(0);
   const [filterPage, setFilterPage] = useState(0);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all'); // all | normal | not_normal
+
+  const statusOptions = [
+    { value: 'all', label: 'Semua' },
+    { value: 'normal', label: 'Suhu Normal (≤ 20°C)' },
+    { value: 'not_normal', label: 'Suhu Tidak Normal (> 20°C)' }
+  ];
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -106,17 +118,30 @@ export default function HistoryLog() {
   }, [date]);
 
   const clearDateFilter = () => {
-    setDate('');
+    setDate(null);
     setPage(0);
   };
 
   // Filter logs client-side as fallback (if API doesn't support date filtering)
-  const filteredLogs = date 
+  const filteredLogs = (date
     ? logs.filter(log => {
-        // Bandingkan tanggal string langsung agar tidak terpengaruh timezone
-        return typeof log.time === 'string' && log.time.slice(0,10) === date;
+        if (typeof log.time !== 'string') return false;
+        const logDate = new Date(log.time);
+        // Bandingkan hanya tanggal, bulan, dan tahun
+        return logDate.getFullYear() === date.getFullYear() &&
+               logDate.getMonth() === date.getMonth() &&
+               logDate.getDate() === date.getDate();
       })
-    : logs;
+    : logs
+  ).filter(log => {
+    if (statusFilter === 'all') return true;
+    if (log.container?.temperature !== undefined && log.container?.temperature !== null) {
+      if (statusFilter === 'normal') return log.container.temperature <= 20;
+      if (statusFilter === 'not_normal') return log.container.temperature > 20;
+    }
+    // Jika tidak ada data suhu, hanya tampilkan di 'all'
+    return statusFilter === 'all';
+  });
 
   // Pagination frontend untuk hasil filter tanggal
   const pagedLogs = date
@@ -135,44 +160,51 @@ export default function HistoryLog() {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium mb-1">Kendaraan</label>
-            <select
-              className="w-full border px-3 py-2 rounded-md"
-              value={selectedVehicleId}
-              onChange={(e) => {
-                setSelectedVehicleId(e.target.value);
+            <Select
+              options={vehicles.map(v => ({ value: v.id, label: v.id }))}
+              value={vehicles.find(v => v.id === selectedVehicleId) ? { value: selectedVehicleId, label: selectedVehicleId } : null}
+              onChange={opt => {
+                setSelectedVehicleId(opt ? opt.value : '');
                 setPage(0);
               }}
-            >
-              <option value="">Pilih Kendaraan</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.id}
-                </option>
-              ))}
-            </select>
+              isClearable
+              placeholder="Pilih atau cari kendaraan..."
+              classNamePrefix="react-select"
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+              styles={selectStyles}
+            />
           </div>
 
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium mb-1">Tanggal</label>
-            <div className="flex gap-2">
-              <input
-                type="date"
-                className="flex-1 border px-3 py-2 rounded-md"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setPage(0);
-                }}
-              />
-              {date && (
-                <button
-                  onClick={clearDateFilter}
-                  className="px-3 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-                >
-                  Clear
-                </button>
-              )}
+                <DatePicker
+                  selected={date}
+                  onChange={(date) => {
+                    setDate(date);
+                    setPage(0);
+                  }}
+                  dateFormat="dd-MM-yyyy"
+                  wrapperClassName="w-full" // ini untuk wrapper agar mengikuti flex-1
+                  className="w-full border px-3 py-2 rounded-md" // ini untuk input-nya agar lebar penuh juga
+                  placeholderText="Pilih tanggal"
+                  isClearable
+                />
             </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium mb-1">Status Suhu</label>
+            <Select
+              options={statusOptions}
+              value={statusOptions.find(opt => opt.value === statusFilter)}
+              onChange={opt => {
+                setStatusFilter(opt.value);
+                setPage(0);
+                setFilterPage(0);
+              }}
+              classNamePrefix="react-select"
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+              styles={selectStyles}
+            />
           </div>
         </div>
 
@@ -189,7 +221,7 @@ export default function HistoryLog() {
 
         {isLoading && (
           <div className="mb-4 p-4 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-slate-800"></div>
             <p className="mt-2">Memuat data...</p>
           </div>
         )}
@@ -231,7 +263,17 @@ export default function HistoryLog() {
                     <td className="px-4 py-2">
                       {log.container?.temperature ? `${log.container.temperature}°C` : '-'}
                     </td>
-                    <td className="px-4 py-2">{log.remarks || '-'}</td>
+                    <td className="px-4 py-2">
+                      {log.container?.temperature !== undefined && log.container?.temperature !== null ? (
+                        log.container.temperature > 20 ? (
+                          <span className="text-orange-500 font-semibold">Suhu Tidak Normal</span>
+                        ) : (
+                          <span className="text-green-600 font-semibold">Suhu Normal</span>
+                        )
+                      ) : (
+                        log.remarks || '-'
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (

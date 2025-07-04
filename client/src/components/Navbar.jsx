@@ -3,6 +3,12 @@ import { Funnel } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useVehicleFilter } from './VehicleFilterContext';
+import DatePicker from 'react-datepicker';
+import "../datepicker.css";
+import { selectStyles } from './selectStyles.js'; // pastikan file ini sama seperti di history log
+import makeAnimated from 'react-select/animated';
+
+const animatedComponents = makeAnimated();
 
 export default function Navbar({ page, selectedDate, setSelectedDate, vehicleIds = [], vehicles }) {
     const { selectedPlates, setSelectedPlates } = useVehicleFilter();
@@ -53,60 +59,69 @@ export default function Navbar({ page, selectedDate, setSelectedDate, vehicleIds
             )}
 
             {page === 'realtime' && (
-                <div className="w-full flex items-center gap-4">
-                    <h1 className="text-md text-zinc-700 flex items-center">
-                        <Funnel className="w-4 h-4 mr-1" />
-                        Filter Kendaraan
-                    </h1>
-                    <Select
-                        isMulti
-                        options={vehicleOptions}
-                        value={vehicleOptions.filter(opt => selectedPlates.includes(opt.value))}
-                        onChange={opts => setSelectedPlates(opts.map(opt => opt.value))}
-                        className="min-w-[220px] text-sm rounded-md"
-                        classNamePrefix="react-select"
-                        menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-                        styles={{
-                            menuPortal: base => ({ ...base, zIndex: 9999 })
-                        }}
-                    />
+                <div className="w-full flex items-center gap-4 justify-between mt-3">
+                    <h1 className="text-xl font-semibold text-zinc-700 -left-3">Realtime Position</h1>
+                    <div className="min-w-[260px]">
+                        <Select
+                            isMulti
+                            placeholder="Pilih atau cari kendaraan..."
+                            options={vehicleOptions}
+                            components={animatedComponents}
+                            value={vehicleOptions.filter(opt => selectedPlates.includes(opt.value))}
+                            onChange={opts => setSelectedPlates(opts.map(opt => opt.value))}
+                            className="min-w-[220px] text-sm rounded-md"
+                            classNamePrefix="react-select"
+                            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+                            styles={{
+                                menuPortal: base => ({ ...base, zIndex: 9999 }), ...selectStyles,
+                            }}
+                        />
+                    </div>
                 </div>
             )}
 
             {page === 'mapview' && (
-                <div className="w-full flex items-center gap-4">
-                    <h1 className="text-md text-zinc-700 flex items-center">
-                        <Funnel className="w-4 h-4 mr-1" />
-                        Pilih Kendaraan & Tanggal
-                    </h1>
-                    <select
-                        className="border bg-white border-zinc-200 rounded-md px-3 py-2 text-sm shadow-sm min-w-[200px]"
-                        value={selectedPlates[0] || ''}
-                        onChange={e => setSelectedPlates([e.target.value])}
-                    >
-                        <option value="">Semua Kendaraan</option>
-                        {vehicleOptions.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
-                    <input
-                        type="date"
-                        className="border bg-white border-zinc-200 rounded-md px-3 py-2 text-sm shadow-sm"
-                        value={typeof selectedDate === 'string' ? selectedDate : ''}
-                        onChange={e => {
-                            if (typeof window !== 'undefined' && window.setSelectedDate) {
-                                window.setSelectedDate(e.target.value);
-                            }
-                            if (typeof setSelectedDate === 'function') {
-                                setSelectedDate(e.target.value);
-                            }
-                        }}
-                    />
+                <div className="w-full flex items-center gap-4 mt-3 justify-between">
+                    <h1 className="text-xl font-semibold text-zinc-700 -left-3">MapView</h1>
+                    <div className="flex items-center gap-4">
+                        <div className="min-w-[260px]">
+                        <Select
+                            placeholder="Pilih atau cari kendaraan..."
+                            options={vehicleOptions}
+                            value={vehicleOptions.find(opt => opt.value === selectedPlates[0]) || null}
+                            onChange={opt => {
+                            setSelectedPlates(opt ? [opt.value] : []);
+                            }}
+                            isClearable
+                            classNamePrefix="react-select"
+                            menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+                            styles={{
+                            menuPortal: base => ({ ...base, zIndex: 9999 }),
+                            ...selectStyles,
+                            }}
+                        />
+                        </div>
+
+                        <div className="min-w-[200px]">
+                        <DatePicker
+                            selected={selectedDate ? new Date(selectedDate) : null}
+                            onChange={(date) => {
+                                if (!date) return setSelectedDate(null);
+
+                                const localDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                setSelectedDate(localDate); // simpan sebagai string "YYYY-MM-DD"
+                            }}
+                            dateFormat="dd-MM-yyyy"
+                            placeholderText="Pilih tanggal"
+                            isClearable
+                        />
+                        </div>
+                    </div>
                 </div>
-            )}
+                )}
 
             {page === 'history' && (
-                <div className="w-full flex justify-between items-center">
+                <div className="w-full flex justify-between items-center mt-3">
                     <h1 className="text-xl font-semibold text-zinc-700 -left-3">Vehicle History Log</h1>
                 </div>
             )}

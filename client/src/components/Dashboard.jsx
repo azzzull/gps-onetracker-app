@@ -1,18 +1,18 @@
-import { Truck, AlertTriangle, MapPinCheckInside, Navigation } from 'lucide-react';
+import { Truck, AlertTriangle, /*MapPinCheckInside,*/ Navigation } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCountUp } from './useCountUp';
 
 export default function Dashboard() {
     const [activeVehicle, setActiveVehicle] = useState(0);
     const [totalVehicle, setTotalVehicle] = useState(0);
-    const [totalRoutes, setTotalRoutes] = useState(0);
+    // const [totalRoutes, setTotalRoutes] = useState(0);
     const [pendingAlerts, setPendingAlerts] = useState('-');
     const [alertVehicles, setAlertVehicles] = useState([]);
     const [showAlertModal, setShowAlertModal] = useState(false);
 
     const animatedActive = useCountUp(activeVehicle);
     const animatedTotal = useCountUp(totalVehicle);
-    const animatedRoutes = useCountUp(totalRoutes);
+    // const animatedRoutes = useCountUp(typeof totalRoutes === 'number' ? totalRoutes : 0);
     const animatedAlerts = useCountUp(typeof pendingAlerts === 'number' ? pendingAlerts : 0);
 
     useEffect(() => {
@@ -26,7 +26,6 @@ export default function Dashboard() {
                 // Hitung active vehicle berdasarkan waktu update terakhir dari data posisi
                 const now = Date.now();
                 let activeCount = 0;
-                let total = 0;
                 let alerts = [];
                 await Promise.all(vehicles.map(async (v) => {
                     try {
@@ -72,19 +71,19 @@ export default function Dashboard() {
 
                 // Fetch total routes dari semua kendaraan
                 // (sudah diakumulasi di atas jika pakai limit=1, jadi fetch ulang jika ingin total semua)
-                let totalRoutes = 0;
-                for (const v of vehicles) {
-                    try {
-                        const res = await fetch(`http://localhost:5000/data?id=${v.id}`);
-                        const data = await res.json();
-                        if (Array.isArray(data)) totalRoutes += data.length;
-                    } catch {}
-                }
-                setTotalRoutes(totalRoutes);
+                // let totalRoutes = 0;
+                // for (const v of vehicles) {
+                //     try {
+                //         const res = await fetch(`http://localhost:5000/data?id=${v.id}`);
+                //         const data = await res.json();
+                //         if (Array.isArray(data)) totalRoutes += data.length;
+                //     } catch {}
+                // }
+                // setTotalRoutes(totalRoutes);
             } catch (err) {
                 setActiveVehicle(0);
                 setTotalVehicle(0);
-                setTotalRoutes(0);
+                // setTotalRoutes(0);
                 setPendingAlerts('-');
             }
         };
@@ -116,6 +115,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Card 3 */}
+                    {/*
                     <div className="card">
                         <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
                             <MapPinCheckInside className="w-6 h-6" />
@@ -123,6 +123,7 @@ export default function Dashboard() {
                         </h2>
                         <p className="text-5xl font-extrabold text-indigo-600 mt-2">{animatedRoutes}</p>
                     </div>
+                    */}
 
                     {/* Card 4 */}
                     <div className="card relative">

@@ -67,7 +67,7 @@ export default function Sidebar({ activePage, setActivePage }) {
 
             {/* Toggle button sections */}
             <div
-                className={`bg-slate-800 h-10 w-10 absolute top-1/2 -translate-y-1/2 -right-5 z-50 cursor-pointer text-slate-400 p-0.5 flex items-center justify-center transition-all duration-300 rounded-full shadow-md`}
+                className={`bg-slate-800 h-10 w-10 absolute top-1/2 -translate-y-1/2 -right-7.5 z-50 cursor-pointer text-slate-400 p-0.5 flex items-center justify-center transition-all duration-300 rounded-full shadow-md`}
                 onClick={() => setOpen(!open)}>
                 {!open
                     ? <PanelLeftOpen />
@@ -108,7 +108,7 @@ export default function Sidebar({ activePage, setActivePage }) {
                             <div
                                 className={`flex items-center justify-between gap-x-4 ${open && "w-50"}`}
                                 onClick={() => toggleSubMenu(Menu.key)}>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 ">
                                     <span className="text-lg">
                                         {Menu.icon}
                                     </span>

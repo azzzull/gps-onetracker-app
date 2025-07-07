@@ -132,7 +132,7 @@ export default function HistoryLog({ vehicles }) {
 
   return (
     <div className="w-full min-h-full bg-slate-100 p-3 relative">
-      <div className="w-full min-h-full rounded-3xl shadow-lg p-10 bg-white">
+      <div className="w-full min-h-150 rounded-3xl shadow-lg p-10 bg-white">
         {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             ⚠️ {error}

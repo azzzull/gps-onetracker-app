@@ -55,7 +55,7 @@ export default function Admin({ vehicles, refreshData }) {
 
     return (
         <div className="w-full min-h-full bg-slate-100 p-3">
-            <div className="bg-white rounded-3xl p-8 shadow-md w-full min-h-full">
+            <div className="bg-white rounded-3xl p-8 shadow-md w-full min-h-150">
                 <h1 className="text-2xl font-bold text-slate-800 mb-6">Admin Panel</h1>
 
                 {isEditing || currentVehicle ? (
